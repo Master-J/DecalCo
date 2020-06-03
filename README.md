@@ -1,4 +1,4 @@
-![DecalCo](https://user-images.githubusercontent.com/54776415/83608466-411aec80-a57d-11ea-9711-9c03a95c07ad.PNG)
+![DecalCo](https://user-images.githubusercontent.com/54776415/83648022-d8039b00-a5b5-11ea-90b1-ebffe687ffd9.PNG)
 
 # What is Decal<sup>CO</sup>?
 
