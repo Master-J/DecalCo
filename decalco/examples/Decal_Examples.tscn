@@ -1,0 +1,621 @@
+[gd_scene load_steps=46 format=2]
+
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_albedo_flipbook.png" type="Texture" id=1]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_albedo.png" type="Texture" id=2]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_emission_flipbook.png" type="Texture" id=3]
+[ext_resource path="res://decalco/examples/assets/textures/checker.png" type="Texture" id=4]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_specular.png" type="Texture" id=5]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_occlusion.png" type="Texture" id=6]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_normal.png" type="Texture" id=7]
+[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_emission.png" type="Texture" id=8]
+[ext_resource path="res://decalco/src/Decal.shader" type="Shader" id=9]
+[ext_resource path="res://decalco/src/Decal.gd" type="Script" id=10]
+
+[sub_resource type="ProceduralSky" id=1]
+sky_top_color = Color( 0.866667, 0.933333, 1, 1 )
+sky_curve = 0.131768
+sun_longitude = -40.35
+
+[sub_resource type="Environment" id=2]
+background_mode = 2
+background_sky = SubResource( 1 )
+background_color = Color( 0.431373, 0.431373, 0.431373, 1 )
+ambient_light_color = Color( 0.262745, 0.262745, 0.262745, 1 )
+ambient_light_sky_contribution = 0.61
+glow_enabled = true
+glow_bloom = 0.09
+
+[sub_resource type="CubeMesh" id=3]
+
+[sub_resource type="Shader" id=4]
+code = "shader_type spatial;
+
+uniform vec4 tint : hint_color = vec4(1.0);
+uniform sampler2D tex : hint_albedo;
+uniform int scale = 1;
+
+void fragment() {
+	float correct_scale = float(scale) * 6.0; //Correct tiling works only for 6*n scales
+	
+	ALBEDO = texture(tex, vec2(UV.x * 0.5, UV.y * 0.33) * correct_scale).rgb * tint.rgb;
+}
+"
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = SubResource( 4 )
+shader_param/tint = Color( 0.501961, 0.501961, 0.501961, 1 )
+shader_param/scale = 12
+shader_param/tex = ExtResource( 4 )
+
+[sub_resource type="CubeMesh" id=6]
+
+[sub_resource type="ShaderMaterial" id=7]
+shader = SubResource( 4 )
+shader_param/tint = Color( 0.372549, 0.372549, 0.372549, 1 )
+shader_param/scale = 3
+shader_param/tex = ExtResource( 4 )
+
+[sub_resource type="SphereMesh" id=8]
+
+[sub_resource type="CubeMesh" id=9]
+
+[sub_resource type="ShaderMaterial" id=10]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( -35, 5, -30 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1, 1, 1 )
+shader_param/albedo = ExtResource( 2 )
+
+[sub_resource type="CylinderMesh" id=11]
+top_radius = 0.001
+
+[sub_resource type="SpatialMaterial" id=12]
+albedo_color = Color( 0, 0, 1, 1 )
+
+[sub_resource type="CylinderMesh" id=13]
+
+[sub_resource type="CubeMesh" id=14]
+
+[sub_resource type="ShaderMaterial" id=15]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 0.921569, 0.862745, 0.596078, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( -15, 5, -29.9379 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+
+[sub_resource type="CubeMesh" id=16]
+
+[sub_resource type="ShaderMaterial" id=17]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 0.172549, 0.172549, 0.172549, 1 )
+shader_param/emission_tint = Color( 1, 0.537255, 0, 1 )
+shader_param/emission_strength = 4.516
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 0.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( 5, 5, -29.938 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/emission = ExtResource( 8 )
+
+[sub_resource type="CubeMesh" id=18]
+
+[sub_resource type="ShaderMaterial" id=19]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 4.516
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( 25, 5, -29.938 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=20]
+
+[sub_resource type="ShaderMaterial" id=21]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( -35, 5, -0.0362415 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1, 1, 1 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/specular = ExtResource( 5 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=22]
+
+[sub_resource type="ShaderMaterial" id=23]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( -15, 5, 0.0258579 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/occlusion = ExtResource( 6 )
+
+[sub_resource type="CubeMesh" id=24]
+
+[sub_resource type="ShaderMaterial" id=25]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 1, 0.537255, 0, 1 )
+shader_param/emission_strength = 4.516
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 0.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( 5, 5, 0.0257587 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/emission = ExtResource( 8 )
+shader_param/occlusion = ExtResource( 6 )
+shader_param/specular = ExtResource( 5 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=26]
+
+[sub_resource type="ShaderMaterial" id=27]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 0.513726, 0.513726, 0.513726, 1 )
+shader_param/emission_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_strength = 4.516
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 3
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( 25, 5, 0.0257587 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 1 )
+shader_param/emission = ExtResource( 3 )
+shader_param/specular = ExtResource( 5 )
+
+[sub_resource type="CubeMesh" id=28]
+
+[sub_resource type="ShaderMaterial" id=29]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( -39.0587, 5, 28.6954 )
+shader_param/decal_right = Vector3( 0.707107, 0, 0.707107 )
+shader_param/decal_up = Vector3( -0.707107, 0, 0.707107 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 2, 2, 2 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/occlusion = ExtResource( 6 )
+shader_param/specular = ExtResource( 5 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=30]
+
+[sub_resource type="ShaderMaterial" id=31]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 1, 0.537255, 0, 1 )
+shader_param/emission_strength = 4.516
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 0.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( -15, 5, 26.8568 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 2, 2, 2 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/emission = ExtResource( 8 )
+shader_param/occlusion = ExtResource( 6 )
+shader_param/specular = ExtResource( 5 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=32]
+
+[sub_resource type="ShaderMaterial" id=33]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0, 0, 1 )
+shader_param/emission_strength = 1.0
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 0.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = true
+shader_param/decal_position = Vector3( 5, 5, 30.0084 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 0, 1 )
+shader_param/decal_forward = Vector3( 0, 1, 0 )
+shader_param/decal_half_scale = Vector3( 1.5, 1.5, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/occlusion = ExtResource( 6 )
+shader_param/specular = ExtResource( 5 )
+shader_param/normal_map = ExtResource( 7 )
+
+[sub_resource type="CubeMesh" id=34]
+
+[sub_resource type="ShaderMaterial" id=35]
+render_priority = -1
+shader = ExtResource( 9 )
+shader_param/albedo_tint = Color( 1, 1, 1, 1 )
+shader_param/emission_tint = Color( 0, 0.552941, 1, 1 )
+shader_param/emission_strength = 2.689
+shader_param/occlusion_strength = 1.0
+shader_param/specular_strength = 1.0
+shader_param/metallic_strength = 1.0
+shader_param/current_frame = 0
+shader_param/flipbook_columns_count = 1
+shader_param/current_frame_blend = 0.0
+shader_param/use_normal_map = false
+shader_param/decal_position = Vector3( 22.0103, 0.0170298, 25.8047 )
+shader_param/decal_right = Vector3( 1, 0, 0 )
+shader_param/decal_up = Vector3( 0, 1, -1.62921e-07 )
+shader_param/decal_forward = Vector3( 0, -1.62921e-07, -1 )
+shader_param/decal_half_scale = Vector3( 3, 4.7935, 0.05 )
+shader_param/albedo = ExtResource( 2 )
+shader_param/emission = ExtResource( 8 )
+shader_param/occlusion = ExtResource( 6 )
+shader_param/specular = ExtResource( 5 )
+
+[node name="Decal_Examples" type="Spatial"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource( 2 )
+
+[node name="World" type="Spatial" parent="."]
+
+[node name="Ground" type="MeshInstance" parent="World"]
+transform = Transform( 40, 0, 0, 0, 1, 0, 0, 0, 40, -3.33689, -1, 0 )
+mesh = SubResource( 3 )
+material/0 = SubResource( 5 )
+
+[node name="Cube" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 5, 5, -35 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube4" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 25, 5, -35 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube2" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -15, 5, -35 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube3" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -35, 5, -35 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube8" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 5, 5, -5 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube7" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 25, 5, -5 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube6" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -15, 5, -5 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube5" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -35, 5, -5 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube12" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 5, 5, 25 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube11" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, 32.911, 5, 27.764 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="Cube10" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -15, 5, 25 )
+mesh = SubResource( 8 )
+material/0 = SubResource( 7 )
+
+[node name="Cube9" type="MeshInstance" parent="World"]
+transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -35, 5, 25 )
+mesh = SubResource( 6 )
+material/0 = SubResource( 7 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 0.72493, -0.344411, 0.596538, 0, 0.866026, 0.5, -0.688823, -0.362465, 0.627808, 0.572802, 4.67392, 8.30557 )
+light_energy = 0.48
+shadow_enabled = true
+
+[node name="Decals" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, 0 )
+
+[node name="Projection" type="MeshInstance" parent="Decals"]
+transform = Transform( 2, 0, 0, 0, 2, 0, 0, 0, 2, -35, 0, -30 )
+cast_shadow = 0
+mesh = SubResource( 9 )
+material/0 = SubResource( 10 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+
+[node name="Projection_Direction_Is_Along_Local_Z_Axis" type="Spatial" parent="Decals/Projection"]
+transform = Transform( -1, 0, -3.25841e-07, 0, 1, 0, 3.25841e-07, 0, -1, 0, 0, 4.38464 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Decals/Projection/Projection_Direction_Is_Along_Local_Z_Axis"]
+transform = Transform( 0.5, 0, 0, 0, -8.14603e-08, 0.5, 0, -0.5, -8.14603e-08, 0, 0, 1.5 )
+mesh = SubResource( 11 )
+material/0 = SubResource( 12 )
+
+[node name="MeshInstance2" type="MeshInstance" parent="Decals/Projection/Projection_Direction_Is_Along_Local_Z_Axis"]
+transform = Transform( 0.25, 0, 0, 0, -2.18557e-08, 0.25, 0, -0.5, -1.09278e-08, 0, 0, 2.5 )
+mesh = SubResource( 13 )
+material/0 = SubResource( 12 )
+
+[node name="Albedo" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, -15, 0, -29.9379 )
+cast_shadow = 0
+mesh = SubResource( 14 )
+material/0 = SubResource( 15 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+albedo_tint = Color( 0.921569, 0.862745, 0.596078, 1 )
+
+[node name="Emission" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 5, 0, -29.938 )
+cast_shadow = 0
+mesh = SubResource( 16 )
+material/0 = SubResource( 17 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+albedo_tint = Color( 0.172549, 0.172549, 0.172549, 1 )
+emission = ExtResource( 8 )
+emission_tint = Color( 1, 0.537255, 0, 1 )
+emission_strength = 4.516
+specular_strength = 0.0
+
+[node name="Normal_Mapping" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 25, 0, -29.938 )
+cast_shadow = 0
+mesh = SubResource( 18 )
+material/0 = SubResource( 19 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+emission_strength = 4.516
+normal_map = ExtResource( 7 )
+
+[node name="Specular" type="MeshInstance" parent="Decals"]
+transform = Transform( 2, 0, 0, 0, 2, 0, 0, 0, 2, -35, 0, -0.0362415 )
+cast_shadow = 0
+mesh = SubResource( 20 )
+material/0 = SubResource( 21 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+specular = ExtResource( 5 )
+normal_map = ExtResource( 7 )
+
+[node name="OmniLight" type="OmniLight" parent="Decals/Specular"]
+transform = Transform( 0.5, 0, 0, 0, 0.5, 0, 0, 0, 0.5, 1.81127, 0.629416, 0.404966 )
+light_color = Color( 1, 0, 0, 1 )
+omni_range = 2.81502
+omni_attenuation = 0.0358969
+
+[node name="Occlusion" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, -15, 0, 0.0258579 )
+cast_shadow = 0
+mesh = SubResource( 22 )
+material/0 = SubResource( 23 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+occlusion = ExtResource( 6 )
+
+[node name="All_Maps" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 5, 0, 0.0257587 )
+cast_shadow = 0
+mesh = SubResource( 24 )
+material/0 = SubResource( 25 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+emission = ExtResource( 8 )
+emission_tint = Color( 1, 0.537255, 0, 1 )
+emission_strength = 4.516
+occlusion = ExtResource( 6 )
+specular = ExtResource( 5 )
+specular_strength = 0.0
+normal_map = ExtResource( 7 )
+
+[node name="Flipbook_Animation" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 25, 0, 0.0257587 )
+cast_shadow = 0
+mesh = SubResource( 26 )
+material/0 = SubResource( 27 )
+script = ExtResource( 10 )
+albedo = ExtResource( 1 )
+albedo_tint = Color( 0.513726, 0.513726, 0.513726, 1 )
+emission = ExtResource( 3 )
+emission_tint = Color( 1, 1, 1, 1 )
+emission_strength = 4.516
+specular = ExtResource( 5 )
+flipbook_columns_count = 3
+flipbook_fps = 2
+flipbook_play = true
+
+[node name="Projection_On_Angles" type="MeshInstance" parent="Decals"]
+transform = Transform( 2.82843, 0, -2.82843, 0, 4, 0, 2.82843, 0, 2.82843, -39.0587, 0, 28.6954 )
+cast_shadow = 0
+mesh = SubResource( 28 )
+material/0 = SubResource( 29 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+occlusion = ExtResource( 6 )
+specular = ExtResource( 5 )
+normal_map = ExtResource( 7 )
+
+[node name="Projection_Direction_Is_Along_Local_Z_Axis" type="Spatial" parent="Decals/Projection_On_Angles"]
+transform = Transform( -1, 0, -3.57628e-07, 0, 1, 0, 3.57628e-07, 0, -1, 1.43051e-06, 0, 4.14371 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Decals/Projection_On_Angles/Projection_Direction_Is_Along_Local_Z_Axis"]
+transform = Transform( 0.5, 0, 0, 0, -8.14603e-08, 0.5, 0, -0.5, -8.14603e-08, 0, 0, 1.5 )
+mesh = SubResource( 11 )
+material/0 = SubResource( 12 )
+
+[node name="MeshInstance2" type="MeshInstance" parent="Decals/Projection_On_Angles/Projection_Direction_Is_Along_Local_Z_Axis"]
+transform = Transform( 0.25, 0, 0, 0, -8.14603e-08, 0.25, 0, -0.5, -4.07302e-08, 0, 0, 2.5 )
+mesh = SubResource( 13 )
+material/0 = SubResource( 12 )
+
+[node name="Projection_On_Sphere" type="MeshInstance" parent="Decals"]
+transform = Transform( 4, 0, 0, 0, 4, 0, 0, 0, 4, -15, 0, 26.8568 )
+cast_shadow = 0
+mesh = SubResource( 30 )
+material/0 = SubResource( 31 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+emission = ExtResource( 8 )
+emission_tint = Color( 1, 0.537255, 0, 1 )
+emission_strength = 4.516
+occlusion = ExtResource( 6 )
+specular = ExtResource( 5 )
+specular_strength = 0.0
+normal_map = ExtResource( 7 )
+
+[node name="Multi_Lights" type="MeshInstance" parent="Decals"]
+transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 5, 0, 30.0084 )
+cast_shadow = 0
+mesh = SubResource( 32 )
+material/0 = SubResource( 33 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+occlusion = ExtResource( 6 )
+specular = ExtResource( 5 )
+specular_strength = 0.0
+normal_map = ExtResource( 7 )
+
+[node name="OmniLight" type="OmniLight" parent="Decals/Multi_Lights"]
+transform = Transform( 0.333333, 0, 0, 0, 0.333333, 0, 0, 0, 10, 0.697144, 0.846878, 16.7906 )
+light_color = Color( 1, 0, 0, 1 )
+light_energy = 5.78
+omni_range = 3.19604
+omni_attenuation = 0.0384733
+
+[node name="OmniLight2" type="OmniLight" parent="Decals/Multi_Lights"]
+transform = Transform( 0.333333, 0, 0, 0, 0.333333, 0, 0, 0, 10, -0.62573, 0.311084, 16.7906 )
+light_color = Color( 0, 0.462745, 1, 1 )
+light_energy = 5.78
+omni_range = 3.19604
+omni_attenuation = 0.0384733
+
+[node name="Realtime_Shadows" type="MeshInstance" parent="Decals"]
+transform = Transform( 6, 0, 0, 0, -1.56192e-06, 0.1, 0, -9.587, -1.62921e-08, 22.0103, -4.98297, 25.8047 )
+cast_shadow = 0
+mesh = SubResource( 34 )
+material/0 = SubResource( 35 )
+script = ExtResource( 10 )
+albedo = ExtResource( 2 )
+emission = ExtResource( 8 )
+emission_tint = Color( 0, 0.552941, 1, 1 )
+emission_strength = 2.689
+occlusion = ExtResource( 6 )
+specular = ExtResource( 5 )
