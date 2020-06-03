@@ -1,9 +1,9 @@
 tool
 extends MeshInstance
-class_name Decal , "res://decalco/icons/icon_decal.svg"
+class_name Decal , "../icons/icon_decal.svg"
 
-const DECAL_SHADER : Resource = preload("res://decalco/src/Decal.shader");
-const BORDER_ALPHA_MASK : Texture = preload("res://decalco/src/alpha_mask.png");
+const DECAL_SHADER : Resource = preload("Decal.shader");
+const BORDER_ALPHA_MASK : Texture = preload("alpha_mask.png");
 
 enum PlaybackType {
 	LOOP, ONE_SHOT
