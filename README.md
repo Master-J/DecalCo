@@ -23,7 +23,7 @@ Decal<sup>CO</sup>'s decals offer the following features :
 # Intallation
 
 - Download Decal<sup>CO</sup>'s source code
-- Unzip it and copy all files in your Godot project's folder.
+- Unzip it and copy the "decalco" folder into your Godot's project folder.
 
 # How to use Decal<sup>CO</sup>?
 
