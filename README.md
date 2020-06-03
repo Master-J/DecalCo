@@ -49,6 +49,7 @@ Having a dozen decals in your camera's view frustum shouldn't be a problem but d
 
 # Known issues and limitations
 
+- Only work with the GLES3.0 renderer
 - PBR lighting not supported because of some hacks necessary for the shader to work, PBR could be done if things like the iradiance texture is exposed to the light shader.
 - Specular lighting only works with a single light.
 - Decal wrapping on sharp angles produce ugly results, this could be solved by cliping the decal on those spots but will require to compute the face normal using the screen texture which would make the shader even less efficient than it already is.
