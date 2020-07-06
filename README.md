@@ -25,6 +25,8 @@ Decal<sup>CO</sup>'s decals offer the following features :
 - Download Decal<sup>CO</sup>'s source code
 - Unzip it and copy the "decalco" folder into your Godot's project folder.
 
+Decal<sup>CO</sup> is also available on the Godot game engine's Asset Library, you can also download and install it directly from the engine's editor.
+
 # How to use Decal<sup>CO</sup>?
 
 Decal<sup>CO</sup> uses a node based approach to make things easier.
