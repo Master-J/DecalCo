@@ -1,0 +1,29 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=4
+
+_global_script_classes=[ {
+"base": "MeshInstance",
+"class": "Decal",
+"language": "GDScript",
+"path": "res://decalco/src/Decal.gd"
+} ]
+_global_script_class_icons={
+"Decal": "res://decalco/icons/icon_decal.svg"
+}
+
+[application]
+
+config/name="Decal"
+
+[rendering]
+
+vram_compression/import_etc=true
+vram_compression/import_etc2=false
+quality/filters/msaa=2

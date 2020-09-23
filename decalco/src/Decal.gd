@@ -130,7 +130,7 @@ func _process(delta : float) -> void :
 	decal_material.set_shader_param("decal_right", global_transform.basis.x.normalized());
 	decal_material.set_shader_param("decal_up", global_transform.basis.z.normalized());
 	decal_material.set_shader_param("decal_forward", global_transform.basis.y.normalized());
-	decal_material.set_shader_param("decal_half_scale", scale / 2.0);
+	decal_material.set_shader_param("decal_half_scale", global_transform.basis.get_scale() / 2.0);
 
 	if normal_map == null :
 		decal_material.set_shader_param("use_normal_map", false);
