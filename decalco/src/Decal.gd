@@ -2,7 +2,6 @@ tool
 extends MeshInstance
 class_name Decal , "../icons/icon_decal.svg"
 
-const DECAL_SHADER : Resource = preload("Decal.shader");
 const BORDER_ALPHA_MASK : Texture = preload("alpha_mask.png");
 
 enum PlaybackType {
@@ -40,7 +39,9 @@ func _init() -> void :
 	cast_shadow = false;
 	
 	decal_material = ShaderMaterial.new();
-	decal_material.shader = DECAL_SHADER;
+	#Assign shader for current driver
+	if   OS.get_current_video_driver() == OS.VIDEO_DRIVER_GLES3: decal_material.shader = preload("Decal.shader");
+	elif OS.get_current_video_driver() == OS.VIDEO_DRIVER_GLES2: decal_material.shader = preload("DecalGLES2.shader");
 
 	set("material/0", decal_material);
 	decal_material.render_priority = -1;	#Needed in order to make the decal render behind transparent geometry
