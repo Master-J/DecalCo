@@ -21,21 +21,33 @@ uniform float metallic_strength = 1.0;
 
 uniform sampler2D normal_map : hint_normal;
 
-uniform int current_frame = 0;
+uniform float animation_speed = 1.0;
 uniform int flipbook_columns_count = 1;
+uniform bool one_shot = false;
+uniform float start_time; // set by script
 
 uniform float current_frame_blend = 0.0;
 
 uniform bool use_normal_map = false;
 
-uniform vec3 decal_position;
-uniform vec3 decal_right;
-uniform vec3 decal_up;
-uniform vec3 decal_forward;
-uniform vec3 decal_half_scale;
+varying vec3 decal_half_scale;
+varying vec3 decal_right;
+varying vec3 decal_up;
+varying vec3 decal_forward;
+
+
+int get_current_frame(float cur_time)
+{
+	int cur_frame = int(round((cur_time - start_time) * animation_speed));
+	if (one_shot)
+	{
+		cur_frame = clamp(cur_frame,0,flipbook_columns_count*flipbook_columns_count-1);
+	}
+	return cur_frame;
+}
 
 //Checks if the given point is in the decal's boundaries using an oriented bounding box defined by the decal's tranform
-bool is_point_in_decal_bounds(vec3 point)
+bool is_point_in_decal_bounds(vec3 point, vec3 decal_position)
 {
 	vec3 scale = decal_half_scale * 2.0;
 	vec3 p = point - decal_position;
@@ -45,10 +57,23 @@ bool is_point_in_decal_bounds(vec3 point)
 
 void vertex()
 {
+	vec3 world_position = (WORLD_MATRIX*vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	UV = world_position.xy;
+	UV2 = vec2(world_position.z,0.0);
+	
+	decal_right = (WORLD_MATRIX*vec4(1.0, 0.0, 0.0, 1.0)).xyz - world_position;
+	decal_forward = (WORLD_MATRIX*vec4(0.0, 0.0, -1.0, 1.0)).xyz - world_position;
+	decal_up = (WORLD_MATRIX*vec4(0.0, 1.0, 0.0, 1.0)).xyz - world_position;
+	decal_half_scale = vec3(length(decal_right), length(decal_forward), length(decal_up)) / 2.0;
+	decal_right = normalize(decal_right);
+	decal_forward = normalize(decal_forward);
+	decal_up = normalize(decal_up);
+	
 	//Override the projector mesh's normals in order to render the decal with mostly correct lighting
-	NORMAL = (vec4(decal_up, 0.0) * WORLD_MATRIX).xyz;
-	TANGENT = (vec4(decal_right, 0.0) * WORLD_MATRIX).xyz;
-	BINORMAL = (vec4(decal_forward, 0.0) * WORLD_MATRIX).xyz;
+	NORMAL = vec3(0.0, 0.0, 1.0); 
+	TANGENT = vec3(1.0, 0.0, 0.0); 
+	BINORMAL = vec3(0.0, 1.0, 0.0); 
+	
 }
 
 void fragment ()
@@ -60,15 +85,19 @@ void fragment ()
 	view.xyz /= view.w;
 	vec4 world = CAMERA_MATRIX * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	vec3 world_position = world.xyz / world.w;
-
-	if(is_point_in_decal_bounds(world_position))
+	
+	vec3 decal_position = vec3(UV.xy, UV2.x);
+	
+	
+	if(is_point_in_decal_bounds(world_position, decal_position))
 	{
 		//If the world position is within the decal's boundaries, we can compute it's uv coordinates
 		vec4 local_position = (vec4(world_position - decal_position, 0.0)) * WORLD_MATRIX;
-
+		int current_frame = get_current_frame(TIME);
 		vec2 flipbook_frame_index = vec2(float(current_frame % flipbook_columns_count), float(current_frame / flipbook_columns_count));
 		vec2 frame_size = vec2(1.0/float(flipbook_columns_count));
-		vec2 uv_coords = (vec2(local_position.x, -local_position.y)  / (4.0*(decal_half_scale.xy * 2.0 * decal_half_scale.xy))) - vec2(0.5);
+
+		vec2 uv_coords = (vec2(local_position.x, -local_position.y)  / (4.0*(decal_half_scale.xz * 2.0 * decal_half_scale.xz))) - vec2(0.5);
 		
 		//This is used to fix some blending issues on the decal's edges, border mask is a white texture with a 1px transparent border on all sides
 		float border_alpha = texture(border_mask, uv_coords).a;
@@ -125,13 +154,14 @@ void light ()
 {
 	//Get back the data from the fragment shader
 	vec3 data = (vec3(1.0) - TRANSMISSION) * 100.0;
-	
+
 	//Recompute UV coordinates
 	vec2 uv_coords = vec2(data.x, -data.y);
-
+	
+	int current_frame = get_current_frame(TIME);
 	vec2 flipbook_frame_index = vec2(float(current_frame % flipbook_columns_count), float(current_frame / flipbook_columns_count));
 	vec2 frame_size = vec2(1.0/float(flipbook_columns_count));
-	uv_coords = (uv_coords.xy / (4.0*(decal_half_scale.xy * 2.0 * decal_half_scale.xy))) - vec2(0.5);
+	uv_coords = (uv_coords.xy / (4.0*(decal_half_scale.xz * 2.0 * decal_half_scale.xz))) - vec2(0.5);
 	uv_coords = uv_coords / float(flipbook_columns_count);
 	uv_coords -= float(flipbook_columns_count - 1) * frame_size - flipbook_frame_index * frame_size;
 
@@ -143,17 +173,17 @@ void light ()
 	}
 
 	float n_dot_l = clamp(dot(normal, LIGHT), 0.0, 1.0);
-	
+
 	//Specular lighting
 	vec3 view_dir = normalize(CAMERA_MATRIX[3].xyz - data);
 	vec3 reflection_dir = reflect(-LIGHT, normal);
 	float spec = pow(max(dot(view_dir, reflection_dir), 0.0), 32);
 	vec3 specular_light = specular_strength * spec * LIGHT_COLOR;  
-	
+
 	//Diffuse lighting
 	vec3 albedo_color = ALBEDO * n_dot_l;
 	albedo_color = albedo_color * mix(1.0, texture(occlusion, uv_coords).r, occlusion_strength);
-	
+
 	DIFFUSE_LIGHT += albedo_color * ATTENUATION * LIGHT_COLOR;
 	SPECULAR_LIGHT = specular_light * texture(specular, uv_coords).r;
 }
