@@ -28,27 +28,37 @@ uniform float current_frame_blend = 0.0;
 
 uniform bool use_normal_map = false;
 
-uniform vec3 decal_position;
-uniform vec3 decal_right;
-uniform vec3 decal_up;
-uniform vec3 decal_forward;
-uniform vec3 decal_half_scale;
+varying vec3 decal_half_scale;
+varying vec3 decal_right;
+varying vec3 decal_up;
+varying vec3 decal_forward;
 
 //Checks if the given point is in the decal's boundaries using an oriented bounding box defined by the decal's tranform
-bool is_point_in_decal_bounds(vec3 point)
+bool is_point_in_decal_bounds(vec3 point, vec3 decal_position)
 {
 	vec3 scale = decal_half_scale * 2.0;
 	vec3 p = point - decal_position;
 	return abs(dot(p, decal_right)) <= scale.x && abs(dot(p, decal_forward)) <= scale.y && abs(dot(p, decal_up)) <= scale.z;
 }
 
-
 void vertex()
 {
+	vec3 world_position = (WORLD_MATRIX*vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	UV = world_position.xy;
+	UV2 = vec2(world_position.z,0.0);
+	
+	decal_right = (WORLD_MATRIX*vec4(1.0, 0.0, 0.0, 1.0)).xyz - world_position;
+	decal_forward = (WORLD_MATRIX*vec4(0.0, 0.0, -1.0, 1.0)).xyz - world_position;
+	decal_up = (WORLD_MATRIX*vec4(0.0, 1.0, 0.0, 1.0)).xyz - world_position;
+	decal_half_scale = vec3(length(decal_right), length(decal_forward), length(decal_up)) / 2.0;
+	decal_right = normalize(decal_right);
+	decal_forward = normalize(decal_forward);
+	decal_up = normalize(decal_up);
+	
 	//Override the projector mesh's normals in order to render the decal with mostly correct lighting
-	NORMAL = (vec4(decal_up, 0.0) * WORLD_MATRIX).xyz;
-	TANGENT = (vec4(decal_right, 0.0) * WORLD_MATRIX).xyz;
-	BINORMAL = (vec4(decal_forward, 0.0) * WORLD_MATRIX).xyz;
+	NORMAL = vec3(0.0, 0.0, 1.0); 
+	TANGENT = vec3(1.0, 0.0, 0.0); 
+	BINORMAL = vec3(0.0, 1.0, 0.0); 
 }
 
 void fragment ()
@@ -61,7 +71,9 @@ void fragment ()
 	vec4 world = CAMERA_MATRIX * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
 	vec3 world_position = world.xyz / world.w;
 
-	if(is_point_in_decal_bounds(world_position))
+	vec3 decal_position = vec3(UV.xy, UV2.x);
+
+	if(is_point_in_decal_bounds(world_position, decal_position))
 	{
 		//If the world position is within the decal's boundaries, we can compute it's uv coordinates
 		vec4 local_position = (vec4(world_position - decal_position, 0.0)) * WORLD_MATRIX;
