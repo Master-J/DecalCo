@@ -29,10 +29,11 @@ Decal<sup>CO</sup> is also available on the Godot game engine's Asset Library, y
 
 # How to use Decal<sup>CO</sup>?
 
-Decal<sup>CO</sup> uses a node based approach to make things easier.
+To add a new decal to your scene, create a new MeshInstance node and give it a cube mesh.
+![image](https://user-images.githubusercontent.com/54776415/103170784-57550680-4847-11eb-81f3-b243117669b8.png)
 
-To add a new decal to your scene, open the "Add Node" window and search for the "Decal" Node .
-![adddecal](https://user-images.githubusercontent.com/54776415/83612272-7bd35380-a582-11ea-8f8a-f27121ebd839.PNG)
+Next, in the MeshInstance's material slot, create a new shader material and load the decal shader.
+![image](https://user-images.githubusercontent.com/54776415/103170845-c7fc2300-4847-11eb-84da-aea89d8842eb.png)
 
 Decal<sup>CO</sup>'s decals are projected along their negative local Z axis, make sure this axis is perpendicular (like in the screenshot below) with the surface the decal is projected on to avoid wrong projections.
 ![projection](https://user-images.githubusercontent.com/54776415/83612625-ef756080-a582-11ea-9824-48863c10e307.PNG)
@@ -40,14 +41,20 @@ Decal<sup>CO</sup>'s decals are projected along their negative local Z axis, mak
 If you want to project a decal in a corner, you can try doing the following :
 ![projectionAngle](https://user-images.githubusercontent.com/54776415/83612801-3400fc00-a583-11ea-923c-9097e790e601.PNG)
 
+In order to fix projections artefacs as much as possible (see example bellow), try keeping the decal as thin as possible by scaling it down on the Z axis.
+Here, the decal's projection box is large, objects passing near it will interfere with it's projection.
+![image](https://user-images.githubusercontent.com/54776415/103170908-435dd480-4848-11eb-8a52-4df38c7ff885.png)
+By making it thiner, the artefac is now gone.
+![image](https://user-images.githubusercontent.com/54776415/103170973-bc5d2c00-4848-11eb-823e-f32bd508f8ef.png)
+
+As the decal's logic is happening in a shader, you can save your decal's materials in your project as a resource and share it accros multiple decals.
+
 A demo scene showcasing how you can use this plugin and its features is available in the examples folder.
 ![demo](https://user-images.githubusercontent.com/54776415/83613098-9528cf80-a583-11ea-92e1-d0b6e10069b0.PNG)
 
 # Performance
 
-Because the engine currently doesn't offer per instance uniforms for materials, each decals you add to your scene will have it's own material instance (so 1 decal = 1 unique material, 5 decal = 5 unique materials), this is required to make scaling and rotating work.
-
-Having a dozen decals in your camera's view frustum shouldn't be a problem but don't expect high performances with hundreds of displayed decals.
+As the decals are shader-based, they should be pretty efficient. They also can share the same material, so the material count dedicated to them can be limited to one material per decal type.
 
 # Known issues and limitations
 

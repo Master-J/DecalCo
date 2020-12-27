@@ -1,15 +1,13 @@
-[gd_scene load_steps=47 format=2]
+[gd_scene load_steps=48 format=2]
 
 [ext_resource path="res://decalco/src/alpha_mask.png" type="Texture" id=1]
 [ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_albedo.png" type="Texture" id=2]
-[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_albedo_flipbook.png" type="Texture" id=3]
 [ext_resource path="res://decalco/examples/assets/textures/checker.png" type="Texture" id=4]
 [ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_specular.png" type="Texture" id=5]
 [ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_occlusion.png" type="Texture" id=6]
 [ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_normal.png" type="Texture" id=7]
 [ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_emission.png" type="Texture" id=8]
 [ext_resource path="res://decalco/src/Decal.shader" type="Shader" id=9]
-[ext_resource path="res://decalco/examples/assets/textures/hex_pattern/hex_pattern_emission_flipbook.png" type="Texture" id=10]
 [ext_resource path="res://decalco/src/SetStartTimeOnDecal.gd" type="Script" id=11]
 
 [sub_resource type="ProceduralSky" id=1]
@@ -215,11 +213,211 @@ shader_param/occlusion = ExtResource( 6 )
 shader_param/specular = ExtResource( 5 )
 shader_param/normal_map = ExtResource( 7 )
 
-[sub_resource type="CubeMesh" id=36]
+[sub_resource type="CubeMesh" id=26]
 
-[sub_resource type="ShaderMaterial" id=37]
+[sub_resource type="Shader" id=27]
+code = "shader_type spatial;
+render_mode blend_mix, depth_draw_never, cull_back, depth_test_disable;
+
+uniform sampler2D border_mask : hint_white;
+
+uniform sampler2D albedo : hint_albedo;
+uniform vec4 albedo_tint : hint_color = vec4(1.0);
+
+uniform sampler2D emission : hint_black;
+uniform vec4 emission_tint : hint_color = vec4(vec3(0.0), 1.0);
+uniform float emission_strength = 1.0;
+
+uniform sampler2D occlusion : hint_white;
+uniform float occlusion_strength = 1.0;
+
+uniform sampler2D specular : hint_white;
+uniform float specular_strength = 1.0;
+
+uniform sampler2D metallic : hint_black;
+uniform float metallic_strength = 1.0;
+
+uniform sampler2D normal_map : hint_normal;
+
+uniform float animation_speed = 1.0;
+uniform int flipbook_columns_count = 1;
+uniform bool one_shot = false;
+uniform float start_time; // set by script
+
+uniform float current_frame_blend = 0.0;
+
+uniform bool use_normal_map = false;
+
+varying vec3 decal_half_scale;
+varying vec3 decal_right;
+varying vec3 decal_up;
+varying vec3 decal_forward;
+
+
+int get_current_frame(float cur_time)
+{
+	int cur_frame = int(round((cur_time - start_time) * animation_speed));
+	if (one_shot)
+	{
+		cur_frame = clamp(cur_frame,0,flipbook_columns_count*flipbook_columns_count-1);
+	}
+	return cur_frame;
+}
+
+//Checks if the given point is in the decal's boundaries using an oriented bounding box defined by the decal's tranform
+bool is_point_in_decal_bounds(vec3 point, vec3 decal_position)
+{
+	vec3 scale = decal_half_scale * 2.0;
+	vec3 p = point - decal_position;
+	return abs(dot(p, decal_right)) <= scale.x && abs(dot(p, decal_forward)) <= scale.y && abs(dot(p, decal_up)) <= scale.z;
+}
+
+
+void vertex()
+{
+	vec3 world_position = (WORLD_MATRIX*vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+	UV = world_position.xy;
+	UV2 = vec2(world_position.z,0.0);
+	
+	decal_right = (WORLD_MATRIX*vec4(1.0, 0.0, 0.0, 1.0)).xyz - world_position;
+	decal_forward = (WORLD_MATRIX*vec4(0.0, 0.0, -1.0, 1.0)).xyz - world_position;
+	decal_up = (WORLD_MATRIX*vec4(0.0, 1.0, 0.0, 1.0)).xyz - world_position;
+	decal_half_scale = vec3(length(decal_right), length(decal_forward), length(decal_up)) / 2.0;
+	decal_right = normalize(decal_right);
+	decal_forward = normalize(decal_forward);
+	decal_up = normalize(decal_up);
+	
+	//Override the projector mesh's normals in order to render the decal with mostly correct lighting
+	NORMAL = vec3(0.0, 0.0, 1.0); 
+	TANGENT = vec3(1.0, 0.0, 0.0); 
+	BINORMAL = vec3(0.0, 1.0, 0.0); 
+	
+}
+
+void fragment ()
+{
+	//Compute world position using the depth buffer
+	float depth = texture(DEPTH_TEXTURE, SCREEN_UV).x;
+	vec3 ndc = vec3(SCREEN_UV, depth) * 2.0 - 1.0;
+	vec4 view = INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
+	view.xyz /= view.w;
+	vec4 world = CAMERA_MATRIX * INV_PROJECTION_MATRIX * vec4(ndc, 1.0);
+	vec3 world_position = world.xyz / world.w;
+	
+	vec3 decal_position = vec3(UV.xy, UV2.x);
+	
+	
+	if(is_point_in_decal_bounds(world_position, decal_position))
+	{
+		//If the world position is within the decal's boundaries, we can compute it's uv coordinates
+		vec4 local_position = (vec4(world_position - decal_position, 0.0)) * WORLD_MATRIX;
+		int current_frame = get_current_frame(TIME);
+		vec2 flipbook_frame_index = vec2(float(current_frame % flipbook_columns_count), float(current_frame / flipbook_columns_count));
+		vec2 frame_size = vec2(1.0/float(flipbook_columns_count));
+
+		vec2 uv_coords = (vec2(local_position.x, -local_position.y)  / (4.0*(decal_half_scale.xz * 2.0 * decal_half_scale.xz))) - vec2(0.5);
+		
+		//This is used to fix some blending issues on the decal's edges, border mask is a white texture with a 1px transparent border on all sides
+		float border_alpha = texture(border_mask, uv_coords).a;
+		
+		//Offset UVs to handle flipbook animation
+		uv_coords = uv_coords / float(flipbook_columns_count);
+		uv_coords -= float(flipbook_columns_count - 1) * frame_size - flipbook_frame_index * frame_size;
+		
+		//Hacky stuff, to get UVs, correct lighting and normal mapping working, i need to get the fragment's local position in the light shader
+		//Unfortunately, we can't use varying to pass values between the fragment and light shaders
+		//To work around this limitation, i put the data i need in the TRANSMISSION built-in.
+		//Also, due to some limitation caused by how this shader works, PBR lighting isn't supported.
+		TRANSMISSION = vec3(1.0) - local_position.xyz / 100.0;
+		
+		ALBEDO = texture(albedo, uv_coords).rgb * albedo_tint.rgb;
+		EMISSION = texture(emission, uv_coords).rgb * emission_tint.rgb * emission_strength;
+		ALPHA = texture(albedo, uv_coords).a * border_alpha;
+	}else{
+		ALPHA = 0.0;
+	}
+}
+
+//taken from http://www.thetenthplanet.de/archives/1180
+mat3 cotangent_frame(vec3 N, vec3 p, vec2 uv) 
+{ 
+
+	vec3 dp1 = dFdx(p); 
+	vec3 dp2 = dFdy(p);
+	vec2 duv1 = dFdx(uv); 
+	vec2 duv2 = dFdy(uv); 
+
+	vec3 dp2perp = cross( dp2, N ); 
+	vec3 dp1perp = cross( N, dp1 ); 
+	
+	vec3 T = dp2perp * duv1.x + dp1perp * duv2.x; 
+	vec3 B = dp2perp * duv1.y + dp1perp * duv2.y; 
+
+	float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) ); 
+	return mat3( T * invmax, B * invmax, N ); 
+}
+
+vec3 perturb_normal(vec3 N, vec3 V, vec2 texcoord ) 
+{ 
+	vec3 map = texture(normal_map, texcoord ).rgb; 
+	map = map * 255./127. - 128./127.; 
+	map.x *= -1.0;
+	map.y *= 1.0;
+	map.z *= -1.0;
+	mat3 TBN = cotangent_frame(N, V, texcoord); 
+	return normalize(TBN * map);
+}
+
+void light () 
+{
+	//Get back the data from the fragment shader
+	vec3 data = (vec3(1.0) - TRANSMISSION) * 100.0;
+
+	//Recompute UV coordinates
+	vec2 uv_coords = vec2(data.x, -data.y);
+	
+	int current_frame = get_current_frame(TIME);
+	vec2 flipbook_frame_index = vec2(float(current_frame % flipbook_columns_count), float(current_frame / flipbook_columns_count));
+	vec2 frame_size = vec2(1.0/float(flipbook_columns_count));
+	uv_coords = (uv_coords.xy / (4.0*(decal_half_scale.xz * 2.0 * decal_half_scale.xz))) - vec2(0.5);
+	uv_coords = uv_coords / float(flipbook_columns_count);
+	uv_coords -= float(flipbook_columns_count - 1) * frame_size - flipbook_frame_index * frame_size;
+
+	//Normal mapping
+	vec3 normal = NORMAL;
+	if(use_normal_map == true)
+	{
+		normal = perturb_normal(NORMAL, VIEW, uv_coords);
+	}
+
+	float n_dot_l = clamp(dot(normal, LIGHT), 0.0, 1.0);
+
+	//Specular lighting
+	vec3 view_dir = normalize(CAMERA_MATRIX[3].xyz - data);
+	vec3 reflection_dir = reflect(-LIGHT, normal);
+	float spec = pow(max(dot(view_dir, reflection_dir), 0.0), 32);
+	vec3 specular_light = specular_strength * spec * LIGHT_COLOR;  
+
+	//Diffuse lighting
+	vec3 albedo_color = ALBEDO * n_dot_l;
+	albedo_color = albedo_color * mix(1.0, texture(occlusion, uv_coords).r, occlusion_strength);
+
+	DIFFUSE_LIGHT += albedo_color * ATTENUATION * LIGHT_COLOR;
+	SPECULAR_LIGHT = specular_light * texture(specular, uv_coords).r;
+}
+"
+
+[sub_resource type="StreamTexture" id=28]
+flags = 23
+load_path = "res://.import/hex_pattern_albedo_flipbook.png-5fd0a467b99f34271dbe5eb8b6f73122.s3tc.stex"
+
+[sub_resource type="StreamTexture" id=29]
+flags = 7
+load_path = "res://.import/hex_pattern_emission_flipbook.png-0cb0677c44c00b982c7c853bafbe6c24.s3tc.stex"
+
+[sub_resource type="ShaderMaterial" id=30]
 render_priority = -1
-shader = ExtResource( 9 )
+shader = SubResource( 27 )
 shader_param/albedo_tint = Color( 0.513726, 0.513726, 0.513726, 1 )
 shader_param/emission_tint = Color( 1, 1, 1, 1 )
 shader_param/emission_strength = 1.0
@@ -229,15 +427,15 @@ shader_param/metallic_strength = 1.0
 shader_param/animation_speed = 3.0
 shader_param/flipbook_columns_count = 3
 shader_param/one_shot = false
-shader_param/start_time = null
+shader_param/start_time = 163.347
 shader_param/current_frame_blend = 0.0
 shader_param/use_normal_map = false
-shader_param/albedo = ExtResource( 3 )
-shader_param/emission = ExtResource( 10 )
+shader_param/albedo = SubResource( 28 )
+shader_param/emission = SubResource( 29 )
 
-[sub_resource type="CubeMesh" id=28]
+[sub_resource type="CubeMesh" id=31]
 
-[sub_resource type="ShaderMaterial" id=29]
+[sub_resource type="ShaderMaterial" id=32]
 render_priority = -1
 shader = ExtResource( 9 )
 shader_param/albedo_tint = Color( 1, 1, 1, 1 )
@@ -258,9 +456,9 @@ shader_param/occlusion = ExtResource( 6 )
 shader_param/specular = ExtResource( 5 )
 shader_param/normal_map = ExtResource( 7 )
 
-[sub_resource type="CubeMesh" id=30]
+[sub_resource type="CubeMesh" id=33]
 
-[sub_resource type="ShaderMaterial" id=31]
+[sub_resource type="ShaderMaterial" id=34]
 render_priority = -1
 shader = ExtResource( 9 )
 shader_param/albedo_tint = Color( 1, 1, 1, 1 )
@@ -282,9 +480,9 @@ shader_param/occlusion = ExtResource( 6 )
 shader_param/specular = ExtResource( 5 )
 shader_param/normal_map = ExtResource( 7 )
 
-[sub_resource type="CubeMesh" id=32]
+[sub_resource type="CubeMesh" id=35]
 
-[sub_resource type="ShaderMaterial" id=33]
+[sub_resource type="ShaderMaterial" id=36]
 render_priority = -1
 shader = ExtResource( 9 )
 shader_param/albedo_tint = Color( 1, 1, 1, 1 )
@@ -305,9 +503,9 @@ shader_param/occlusion = ExtResource( 6 )
 shader_param/specular = ExtResource( 5 )
 shader_param/normal_map = ExtResource( 7 )
 
-[sub_resource type="CubeMesh" id=34]
+[sub_resource type="CubeMesh" id=37]
 
-[sub_resource type="ShaderMaterial" id=35]
+[sub_resource type="ShaderMaterial" id=38]
 render_priority = -1
 shader = ExtResource( 9 )
 shader_param/albedo_tint = Color( 1, 1, 1, 1 )
@@ -400,7 +598,7 @@ transform = Transform( 5, 0, 0, 0, 5, 0, 0, 0, 5, -35, 5, 25 )
 mesh = SubResource( 6 )
 material/0 = SubResource( 7 )
 
-[node name="DirectionalLight" type="DirectionalLight" parent="."]
+[node name="DirectionalLight" type="DirectionalLight" parent="World"]
 transform = Transform( 0.72493, -0.344411, 0.596538, 0, 0.866026, 0.5, -0.688823, -0.362465, 0.627808, 0.572802, 4.67392, 8.30557 )
 light_energy = 0.48
 shadow_enabled = true
@@ -469,18 +667,18 @@ cast_shadow = 0
 mesh = SubResource( 24 )
 material/0 = SubResource( 25 )
 
-[node name="Flipbook_Animation" type="MeshInstance" parent="Decals"]
+[node name="Flipbook_Animation_(SetStartTimeOnDecal script needed)" type="MeshInstance" parent="Decals"]
 transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 25, 0, 0.0257587 )
 cast_shadow = 0
-mesh = SubResource( 36 )
-material/0 = SubResource( 37 )
+mesh = SubResource( 26 )
+material/0 = SubResource( 30 )
 script = ExtResource( 11 )
 
 [node name="Projection_On_Angles" type="MeshInstance" parent="Decals"]
 transform = Transform( 2.82843, 0, -2.82843, 0, 4, 0, 2.82843, 0, 2.82843, -39.0587, 0, 28.6954 )
 cast_shadow = 0
-mesh = SubResource( 28 )
-material/0 = SubResource( 29 )
+mesh = SubResource( 31 )
+material/0 = SubResource( 32 )
 
 [node name="Projection_Direction_Is_Along_Local_Z_Axis" type="Spatial" parent="Decals/Projection_On_Angles"]
 transform = Transform( -1, 0, -3.57628e-07, 0, 1, 0, 3.57628e-07, 0, -1, 1.43051e-06, 0, 4.14371 )
@@ -498,14 +696,14 @@ material/0 = SubResource( 12 )
 [node name="Projection_On_Sphere" type="MeshInstance" parent="Decals"]
 transform = Transform( 4, 0, 0, 0, 4, 0, 0, 0, 4, -15, 0, 26.8568 )
 cast_shadow = 0
-mesh = SubResource( 30 )
-material/0 = SubResource( 31 )
+mesh = SubResource( 33 )
+material/0 = SubResource( 34 )
 
 [node name="Multi_Lights" type="MeshInstance" parent="Decals"]
 transform = Transform( 3, 0, 0, 0, 3, 0, 0, 0, 0.1, 5, 0, 30.0084 )
 cast_shadow = 0
-mesh = SubResource( 32 )
-material/0 = SubResource( 33 )
+mesh = SubResource( 35 )
+material/0 = SubResource( 36 )
 
 [node name="OmniLight" type="OmniLight" parent="Decals/Multi_Lights"]
 transform = Transform( 0.333333, 0, 0, 0, 0.333333, 0, 0, 0, 10, 0.697144, 0.846878, 16.7906 )
@@ -524,9 +722,5 @@ omni_attenuation = 0.0384733
 [node name="Realtime_Shadows" type="MeshInstance" parent="Decals"]
 transform = Transform( 6, 0, 0, 0, -1.56192e-06, 0.1, 0, -9.587, -1.62921e-08, 22.0103, -4.98297, 25.8047 )
 cast_shadow = 0
-mesh = SubResource( 34 )
-material/0 = SubResource( 35 )
-
-[node name="Camera" type="Camera" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 24.259, 5.96844, 13.7529 )
-current = true
+mesh = SubResource( 37 )
+material/0 = SubResource( 38 )

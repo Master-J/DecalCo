@@ -1,3 +1,4 @@
+tool
 extends MeshInstance
 
 # use this script on one shot flipbook animations
