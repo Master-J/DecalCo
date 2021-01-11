@@ -29,7 +29,7 @@ Decal<sup>CO</sup> is also available on the Godot game engine's Asset Library, y
 
 # How to use Decal<sup>CO</sup>?
 
-To add a new decal to your scene, create a new MeshInstance node and give it a cube mesh.
+To add a new decal to your scene, create a new MeshInstance node and give it a cube mesh and turn off it's "cast shadows" property.
 ![image](https://user-images.githubusercontent.com/54776415/103170784-57550680-4847-11eb-81f3-b243117669b8.png)
 
 Next, in the MeshInstance's material slot, create a new shader material and load the decal shader.
