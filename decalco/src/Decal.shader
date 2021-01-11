@@ -114,7 +114,7 @@ void fragment ()
 		
 		ALBEDO = texture(albedo, uv_coords).rgb * albedo_tint.rgb;
 		EMISSION = texture(emission, uv_coords).rgb * emission_tint.rgb * emission_strength;
-		ALPHA = texture(albedo, uv_coords).a * border_alpha;
+		ALPHA = texture(albedo, uv_coords).a * albedo_tint.a * border_alpha;
 	}else{
 		ALPHA = 0.0;
 	}
